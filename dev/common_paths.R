@@ -1,4 +1,4 @@
-dataDirPath <- "../../SimuChaosWithNoiseData"
+dataDirPath <- "../SimuChaosWithNoiseData"
 plotDirPath <- file.path("../img")
 tableDirPath <- file.path("../tbl")
 evalDirPath <- file.path(dataDirPath, "evaluation")
