@@ -22,3 +22,13 @@ sampleTruth <- function(longTruth, stepRate, nTrain, nTest, seed) {
     tTest = longTime[testIndices] - longT0
   )
 }
+
+sampleNTruthX <- function(longTruth, stepRate, len, nReps, seed) {
+  limit <- nrow(longTruth) - ((len+1)*stepRate)
+  startIdxs <-  withr::with_seed(seed, sample.int(limit, nReps))
+  vapply(
+    startIdxs,
+    \(startIdx) longTruth[seq(startIdx, length.out=len, by=stepRate), -1],
+    FUN.VALUE = matrix(double(), nrow=len, ncol=ncol(longTruth)-1)
+  )
+}

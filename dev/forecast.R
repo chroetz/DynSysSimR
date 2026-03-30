@@ -12,10 +12,10 @@ testDuration <- 20
 nInSample <- 100
 nOutOfSample <- 100
 oosReps <- 10
-nTrain <- 2^10
-stepRate <- 2^5
+nTrain <- 2^12
+stepRate <- 2^2
 methodStrings <- c(
-  "PolyProp: nDeg=3",
+  "PolyProp: nDeg=5",
   "EnKF: nDeg=2;coefUpdate='coupled'",
   "EchoBoost: nDeg=2;adjustResponse=FALSE",
   NULL
@@ -69,14 +69,7 @@ for (parentSeed in randomSeeds) {
 
   truthSample <- sampleTruth(truth$data, stepRate, nTrain, nTest, seed=seeds["truth"])
 
-  oosLimit <- nrow(truth$data) - nOutOfSample - 1
-  startIdxs <-  withr::with_seed(seeds["oos"], sample.int(oosLimit, oosReps))
-  xOos <- vapply(
-    startIdxs,
-    \(startIdx) truth$data[startIdx+seq_len(nOutOfSample+1)-1, -1],
-    FUN.VALUE = matrix(double(), nrow=nOutOfSample+1, ncol=ncol(truth$data)-1)
-  )
-
+  xOos <- sampleNTruthX(truth$data, stepRate, nOutOfSample+1, oosReps, seeds["oos"])
 
   xTrainTruth <- truthSample$xTrain
   xTest <- truthSample$xTest
