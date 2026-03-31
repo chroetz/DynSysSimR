@@ -10,6 +10,16 @@
 # Designed for n ~ 1e6, d in 1..10.  No external packages required.
 ###############################################################################
 
+# ---- 0. Input sanitisation helper ------------------------------------------
+#
+# Keep only rows where every element is finite (not NA, NaN, Inf, -Inf).
+# Returns the cleaned matrix, or a zero-row matrix if nothing survives.
+
+keepFiniteRows <- function(M) {
+  finite <- rowSums(!is.finite(M)) == 0L
+  M[finite, , drop = FALSE]
+}
+
 # ---- 1. Largest Lyapunov exponent (Rosenstein-style) -----------------------
 #
 # Since x is already in full state space we skip delay embedding.
@@ -210,7 +220,15 @@ acfPerDim <- function(X, maxLag = 100L) {
 
   acPerDim <- matrix(NA_real_, nrow = maxLag + 1L, ncol = d)
   for (j in seq_len(d)) {
-    acPerDim[, j] <- as.numeric(acf(X[, j], lag.max = maxLag, plot = FALSE)$acf)
+    col <- X[, j]
+    col <- col[is.finite(col)]
+    if (length(col) < 2L) next
+    lag_j <- min(maxLag, length(col) - 1L)
+    a <- tryCatch(
+      as.numeric(acf(col, lag.max = lag_j, plot = FALSE)$acf),
+      error = function(e) NULL
+    )
+    if (!is.null(a)) acPerDim[seq_along(a), j] <- a
   }
   return(acPerDim)
 }
@@ -235,6 +253,21 @@ compareLong <- function(query, target,
                         acfMaxLag      = 100L) {
 
   stopifnot(is.matrix(query), is.matrix(target), ncol(query) == ncol(target))
+
+  # Strip rows containing NA, NaN, Inf, -Inf so downstream code never sees them
+  d <- ncol(query)
+  query  <- keepFiniteRows(query)
+  target <- keepFiniteRows(target)
+
+  if (nrow(query) < 2L || nrow(target) < 2L) {
+    warning("Too few finite rows in query or target; returning all NA.")
+    return(list(
+      lyapunov             = NA_real_,
+      wasserstein          = list(mean = NA_real_, sd = NA_real_, n = 0L),
+      correlationDimension = NA_real_,
+      autocorrelation      = matrix(NA_real_, nrow = acfMaxLag + 1L, ncol = d)
+    ))
+  }
 
   leX <- estimateLyapunov(
     query, lyapMaxIter, lyapNRef, lyapNCand,
