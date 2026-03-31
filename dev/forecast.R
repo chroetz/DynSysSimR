@@ -12,10 +12,11 @@ testDuration <- 20
 nInSample <- 100
 nOutOfSample <- 100
 nLong <- 1e5
-oosReps <- 10
+oosReps <- 100
 nTrain <- 2^12
 stepRate <- 2^2
 methodStrings <- c(
+  sprintf("RK4: systemName='L63';timeStep=2^%d", -10+log2(stepRate)),
   "PolyProp: nDeg=5",
   "EnKF: nDeg=2;coefUpdate='coupled'",
   "EchoBoost: nDeg=2;adjustResponse=FALSE",
@@ -91,6 +92,7 @@ for (parentSeed in randomSeeds) {
       fitResult <- fitMethod(methodString, xTrainTrain, seeds["fit"])
       model <- fitResult$model
       methodName <- fitResult$methodName
+
 
       # Assimilation Error
       assimilateResult <- assimilateMethod(methodName, model, xTrainTrain, seeds["assimilate"])
