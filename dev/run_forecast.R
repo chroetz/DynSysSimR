@@ -13,19 +13,19 @@ if (length(args) == 0) {
 
 
 methodStrings <- c(
-  "RK4: systemName=\\\"L63\\\";timeStep=2^-5",
+  "RK4: systemName=\\\'L63\\\';timeStep=2^-5",
   "PolyProp: nDeg=2",
   "PolyProp: nDeg=3",
   "PolyProp: nDeg=4",
   "PolyProp: nDeg=5",
-  "EnKF: nDeg=2;coefUpdate='coupled'",
-  "EnKF: nDeg=3;coefUpdate='coupled'",
-  "EnKF: nDeg=4;coefUpdate='coupled'",
-  "EnKF: nDeg=5;coefUpdate='coupled'",
-  "EnKF: nDeg=2;coefUpdate='decoupled'",
-  "EnKF: nDeg=3;coefUpdate='decoupled'",
-  "EnKF: nDeg=4;coefUpdate='decoupled'",
-  "EnKF: nDeg=5;coefUpdate='decoupled'",
+  "EnKF: nDeg=2;coefUpdate=\\\'coupled\\\'",
+  "EnKF: nDeg=3;coefUpdate=\\\'coupled\\\'",
+  "EnKF: nDeg=4;coefUpdate=\\\'coupled\\\'",
+  "EnKF: nDeg=5;coefUpdate=\\\'coupled\\\'",
+  "EnKF: nDeg=2;coefUpdate=\\\'decoupled\\\'",
+  "EnKF: nDeg=3;coefUpdate=\\\'decoupled\\\'",
+  "EnKF: nDeg=4;coefUpdate=\\\'decoupled\\\'",
+  "EnKF: nDeg=5;coefUpdate=\\\'decoupled\\\'",
   "EchoBoost: nDeg=2;adjustResponse=FALSE",
   "EchoBoost: nDeg=3;adjustResponse=FALSE",
   "EchoBoost: nDeg=4;adjustResponse=FALSE",
@@ -50,8 +50,8 @@ cmdBase <- makeCmd(
 )
 
 cmds <- NULL
-for (method in methods) {
-  cmds <- c(cmds, sprintf(cmdBase, randomSeeds, method))
+for (methodString in methodStrings) {
+  cmds <- c(cmds, sprintf(cmdBase, randomSeeds, methodString))
 }
 
 

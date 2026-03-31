@@ -19,14 +19,16 @@
 # (in units of 1/dt, where dt is the sampling step).
 
 estimateLyapunov <- function(X, maxIter  = 500L,
-                              nRef      = 2000L,
-                              nCand     = 5000L,
-                              minSep    = 50L,
-                              fitStart  = 10L,
-                              fitEnd    = NULL) {
+                             nRef      = 2000L,
+                             nCand     = 5000L,
+                             minSep    = 50L,
+                             fitStart  = 10L,
+                             fitEnd    = NULL) {
   n <- nrow(X);  d <- ncol(X)
-  if (n < maxIter + minSep + 1L)
-    stop("Trajectory too short for the requested maxIter / minSep.")
+  if (n < maxIter + minSep + 1L) {
+    warning("Trajectory too short for the requested maxIter / minSep; returning NA.")
+    return(NA_real_)
+  }
 
   usable  <- n - maxIter
   refIdx  <- sample.int(usable, size = min(nRef, usable))
@@ -59,8 +61,13 @@ estimateLyapunov <- function(X, maxIter  = 500L,
   }
 
   # average curve (drop rows that had no valid neighbour)
-  good <- !is.na(logDiv[, 1L])
-  if (sum(good) < 20L) warning("Very few valid reference pairs found.")
+  good  <- !is.na(logDiv[, 1L])
+  nGood <- sum(good)
+  if (nGood == 0L) {
+    warning("No valid reference pairs found; returning NA for Lyapunov exponent.")
+    return(NA_real_)
+  }
+  if (nGood < 20L) warning("Very few valid reference pairs found.")
   S <- colMeans(logDiv[good, , drop = FALSE])
 
   # linear fit in the scaling region
@@ -69,7 +76,14 @@ estimateLyapunov <- function(X, maxIter  = 500L,
   fitStart <- max(fitStart, 1L)
   idx <- fitStart:fitEnd
   tt  <- idx - 1L                       # time in units of dt
-  fit <- lm(S[idx] ~ tt)
+
+  # guard against all-NA / all-NaN fit region
+  ok <- is.finite(S[idx])
+  if (sum(ok) < 2L) {
+    warning("Too few finite values in the scaling region; returning NA.")
+    return(NA_real_)
+  }
+  fit <- lm(S[idx][ok] ~ tt[ok])
   as.numeric(coef(fit)[2L])              # slope = Lyapunov exponent / dt
 }
 
@@ -87,12 +101,19 @@ slicedWasserstein <- function(X, Y, nProj = 100L) {
 
   # truncate the longer trajectory so both have equal length
   n <- min(nrow(X), nrow(Y))
+  if (n < 2L) {
+    warning("Trajectories too short for Wasserstein; returning NA.")
+    return(NA_real_)
+  }
   X <- X[seq_len(n), , drop = FALSE]
   Y <- Y[seq_len(n), , drop = FALSE]
 
   # random projection directions (d x nProj), unit normalised
   dirs <- matrix(rnorm(d * nProj), nrow = d, ncol = nProj)
-  dirs <- dirs / rep(sqrt(colSums(dirs^2)), each = d)
+  norms <- sqrt(colSums(dirs^2))
+  # guard against zero-norm direction (astronomically unlikely but safe)
+  norms[norms == 0] <- 1
+  dirs <- dirs / rep(norms, each = d)
 
   # project: n x nProj for each trajectory
   pX <- X %*% dirs
@@ -119,11 +140,20 @@ estimateCorrelationDimension <- function(X,
                                          qHi      = 0.40,
                                          fitFrac  = c(0.20, 0.80)) {
   n <- nrow(X)
+  if (n < 3L) {
+    warning("Too few points for correlation dimension; returning NA.")
+    return(NA_real_)
+  }
   idx <- sample.int(n, size = min(nSample, n))
   Xs  <- X[idx, , drop = FALSE]
 
   dists <- as.vector(dist(Xs))              # N*(N-1)/2 distances
   dists <- dists[dists > 0]
+
+  if (length(dists) < 2L) {
+    warning("All pairwise distances are zero; returning NA.")
+    return(NA_real_)
+  }
 
   radii <- exp(seq(log(quantile(dists, qLo)),
                    log(quantile(dists, qHi)),
@@ -136,9 +166,18 @@ estimateCorrelationDimension <- function(X,
   logCr <- log(Cr[ok])
   nOk   <- length(logR)
 
+  if (nOk < 2L) {
+    warning("No usable points in the correlation integral; returning NA.")
+    return(NA_real_)
+  }
+
   # fit the scaling (middle) portion of the log-log plot
   i1  <- max(1L, round(nOk * fitFrac[1]))
   i2  <- min(nOk, round(nOk * fitFrac[2]))
+  if (i2 <= i1) {
+    warning("Scaling region too narrow for fit; returning NA.")
+    return(NA_real_)
+  }
   fit <- lm(logCr[i1:i2] ~ logR[i1:i2])
   as.numeric(coef(fit)[2L])
 }
@@ -152,8 +191,16 @@ estimateCorrelationDimension <- function(X,
 
 acfPerDim <- function(X, maxLag = 100L) {
   d <- ncol(X)
+  n <- nrow(X)
 
-  acPerDim <- matrix(NA_real_, nrow=maxLag+1, ncol=d)
+  # need at least maxLag + 1 observations; clamp if needed
+  if (n < 2L) {
+    warning("Trajectory too short for ACF; returning NA matrix.")
+    return(matrix(NA_real_, nrow = maxLag + 1L, ncol = d))
+  }
+  maxLag <- min(maxLag, n - 1L)
+
+  acPerDim <- matrix(NA_real_, nrow = maxLag + 1L, ncol = d)
   for (j in seq_len(d)) {
     acPerDim[, j] <- as.numeric(acf(X[, j], lag.max = maxLag, plot = FALSE)$acf)
   }
@@ -192,10 +239,17 @@ compareLong <- function(query, target,
 
   ac <- acfPerDim(query, acfMaxLag)
 
+  # build Wasserstein summary; handle scalar NA from degenerate case
+  if (length(sw) == 1L && is.na(sw)) {
+    wsSummary <- list(mean = NA_real_, sd = NA_real_, n = 0L)
+  } else {
+    wsSummary <- list(mean = mean(sw), sd = sd(sw), n = length(sw))
+  }
+
   list(
-    lyapunov = leX,
-    wasserstein = tibble(mean = mean(sw), sd = sd(sw), n = length(sw)),
+    lyapunov             = leX,
+    wasserstein          = wsSummary,
     correlationDimension = cdX,
-    autocorrelation = ac
+    autocorrelation      = ac
   )
 }
