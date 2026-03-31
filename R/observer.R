@@ -1,3 +1,4 @@
+#' @export
 observe <- function(xTruth, noiseSd, type, seed) {
   observeSpecific <- switch(
     type,

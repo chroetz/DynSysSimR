@@ -1,6 +1,7 @@
 options(tidyverse.quiet = TRUE)
 library(tidyverse)
-source("dev/common_paths.R")
+library(DynSysSimR)
+source("common_paths.R")
 
 
 # default parameters
@@ -13,13 +14,13 @@ nInSample <- 100
 nOutOfSample <- 100
 nLong <- 1e5
 oosReps <- 100
-nTrain <- 2^12
-stepRate <- 2^2
+nTrain <- 2^10
+stepRate <- 2^5
 methodStrings <- c(
-  sprintf("RK4: systemName='L63';timeStep=2^%d", -10+log2(stepRate)),
-  "PolyProp: nDeg=5",
-  "EnKF: nDeg=2;coefUpdate='coupled'",
-  "EchoBoost: nDeg=2;adjustResponse=FALSE",
+  #sprintf("RK4: systemName='L63';timeStep=2^%d", -10+log2(stepRate)),
+  "PolyProp: nDeg=3",
+  #"EnKF: nDeg=2;coefUpdate='coupled'",
+  #"EchoBoost: nDeg=2;adjustResponse=FALSE",
   NULL
 )
 label <- NULL
@@ -42,7 +43,6 @@ truthMean <- colMeans(truth$data[, -1])
 truthSd <- sqrt(sum(colMeans((truth$data[, -1] - rep(truthMean, each=nrow(truth$data)))^2)))
 
 
-
 info <- lst(
   args,
   randomSeeds,
@@ -50,11 +50,18 @@ info <- lst(
   noiseName,
   noiseScales,
   testDuration,
+  nInSample,
+  nOutOfSample,
+  nLong,
+  oosReps,
   nTrain,
   stepRate,
   methodStrings,
   label,
-  outName
+  outName,
+  nTest,
+  truthMean,
+  truthSd,
 )
 
 cat("Run forecast with following info:\n")

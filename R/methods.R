@@ -1,3 +1,4 @@
+#' @export
 fitMethod <- function(methodString, xTrain, seed) {
 
   method <- splitMethodString(methodString)
@@ -26,6 +27,7 @@ fitMethod <- function(methodString, xTrain, seed) {
   )
 }
 
+#' @export
 predictMethod <- function(methodName, model, initialConditions, nPred, seed) {
 
   args <- lst(model, initialConditions, nPred)
@@ -49,6 +51,7 @@ predictMethod <- function(methodName, model, initialConditions, nPred, seed) {
   )
 }
 
+#' @export
 assimilateMethod <- function(methodName, model, xTrain, seed) {
 
   args <- lst(model, xTrain)

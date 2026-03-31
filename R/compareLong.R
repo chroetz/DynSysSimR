@@ -163,6 +163,7 @@ acfPerDim <- function(X, maxLag = 100L) {
 
 # ---- Main comparison -------------------------------------------------------
 
+#' @export
 compareLong <- function(query, target,
                         # Lyapunov parameters
                         lyapMaxIter    = 500L,

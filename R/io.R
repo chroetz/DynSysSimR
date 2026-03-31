@@ -1,3 +1,4 @@
+#' @export
 writeInfoAndData <- function(info, data, dirPath, name, excludeInfoEntryFromHash = c("^args$", "Path$")) {
 
   excludedInfoEntryFromHash <- sapply(names(info), \(nm) any(stringr::str_detect(nm, excludeInfoEntryFromHash)))
@@ -39,7 +40,7 @@ writeInfoAndData <- function(info, data, dirPath, name, excludeInfoEntryFromHash
   return( dplyr::lst(hash, dataFilePath, infoFilePath))
 }
 
-
+#' @export
 writeInfo <- function(info, infoFilePath) {
   jsonlite::write_json(
     info,
@@ -53,6 +54,7 @@ writeInfo <- function(info, infoFilePath) {
   )
 }
 
+#' @export
 printInfo <- function(info) {
   jsonlite::toJSON(
     info,
@@ -66,7 +68,7 @@ printInfo <- function(info) {
     print()
 }
 
-
+#' @export
 readInfoAndData <- function(dirPath = NULL, name = NULL, filePath = NULL) {
   info <- readInfo(dirPath, name, filePath)
   data <- readData(dirPath, paste(info$name, info$hash, sep="_"))
@@ -76,6 +78,7 @@ readInfoAndData <- function(dirPath = NULL, name = NULL, filePath = NULL) {
   return(dplyr::lst(info, data))
 }
 
+#' @export
 readInfo <- function(dirPath = NULL, name = NULL, filePath = NULL) {
   if (is.null(filePath)) {
     stopifnot(is.character(dirPath))
@@ -98,6 +101,7 @@ readInfo <- function(dirPath = NULL, name = NULL, filePath = NULL) {
   jsonlite::read_json(filePath, simplifyVector = TRUE)
 }
 
+#' @export
 readData <- function(dirPath = NULL, name = NULL, filePath = NULL) {
   if (is.null(filePath)) {
     stopifnot(is.character(dirPath))
@@ -120,20 +124,21 @@ readData <- function(dirPath = NULL, name = NULL, filePath = NULL) {
   arrow::read_feather(filePath)
 }
 
-
+#' @export
 saveGgplotAsPdf <- function(plt, outFilePath, width, height, ...) {
   cat("Write", outFilePath, "\n")
   ggsave(
     filename = outFilePath,
     plot = plt,
     width = width,
-    heigh = height,
+    height = height,
     device = cairo_pdf,
     family = "Helvetica",
     ...
   )
 }
 
+#' @export
 saveGgplotAsTikz <- function(plt, outFilePath, width, height, ...) {
   tikzDevice::tikz(
     file = outFilePath,
@@ -157,8 +162,9 @@ saveGgplotAsTikz <- function(plt, outFilePath, width, height, ...) {
   system(sprintf("pdflatex.exe -interaction=nonstopmode -output-directory=\"%s\" \"%s\"", dirname(outFilePath), outFilePath))
 }
 
+#' @export
 writeTableAsLatex <- function(tbl, outFilePath) {
-  latex <- tbl |> as_latex()
+  latex <- tbl |> gt::as_latex()
   txt <-
     latex |>
     str_replace(fixed("\\begin{table}[!t]"), "\\begin{center}") |>
