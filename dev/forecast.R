@@ -11,6 +11,7 @@ noiseScales <- c(0, 1e-1)
 testDuration <- 20
 nInSample <- 100
 nOutOfSample <- 100
+nLong <- 1e5
 oosReps <- 10
 nTrain <- 2^12
 stepRate <- 2^2
@@ -64,8 +65,8 @@ for (parentSeed in randomSeeds) {
 
   cat(sprintf("randomSeed: %d...\n", parentSeed))
   set.seed(parentSeed)
-  seeds <- sample.int(.Machine$integer.max, 6L)
-  names(seeds) <- c("truth", "oos", "noise", "fit", "assimilate", "predict")
+  seeds <- sample.int(.Machine$integer.max, 8L)
+  names(seeds) <- c("truth", "oos", "noise", "fit", "assimilate", "predict", "longStart", "longCompare")
 
   truthSample <- sampleTruth(truth$data, stepRate, nTrain, nTest, seed=seeds["truth"])
 
@@ -123,8 +124,23 @@ for (parentSeed in randomSeeds) {
       diff <- (predictOosResult$prediction - xOos[-1, , ])^2
       oosRmse <- sqrt(rowMeans(apply(diff, 3, rowSums)))
 
-      # TODO:
       # long term
+      longStart <-
+        withr::with_seed(
+          seeds["longStart"],
+          truth$data[sample.int(nrow(truth$data), 1), -1, drop=FALSE]
+        )
+      predictLongResult <- predictMethod(methodName, model, longStart, nLong, seeds["predict"])
+      ptLongCompare <- proc.time()
+      longTermStats <-
+        withr::with_seed(
+          seeds["longCompare"],
+          compareLong(
+            query = predictLongResult$prediction[,,1],
+            target = truth$data[seq(1, nrow(truth$data), by=stepRate), -1]
+          )
+        )
+      cat(sprintf(" (compareLong: %.2fs) ", (proc.time()-ptLongCompare)["elapsed"]))
 
       measuredResults <- list(
         fit = fitResult,
@@ -132,7 +148,8 @@ for (parentSeed in randomSeeds) {
         predictDirectTrue = predictDirectTrueResult,
         predictDirectAssi = predictDirectAssiResult,
         predictInSample = predictInSampleResult,
-        predictOos = predictOosResult
+        predictOos = predictOosResult,
+        predictLong = predictLongResult
       )
       time <- as_tibble_row(lapply(measuredResults, \(x) x$time))
       mem <- as_tibble_row(lapply(measuredResults, \(x) x$mem))
@@ -148,7 +165,11 @@ for (parentSeed in randomSeeds) {
         forecastError = list(forcastErrTbl),
         assimilationError = list(assimilationErrTbl),
         consistencyRmse = list(consistencyRmse),
-        oosRmse = list(oosRmse)
+        oosRmse = list(oosRmse),
+        lyapunov = longTermStats$lyapunov,
+        wasserstein = longTermStats$wasserstein,
+        correlationDimension = longTermStats$correlationDimension,
+        autocorrelation = list(longTermStats$autocorrelation)
       )
 
       results <- append(results, list(result))
