@@ -36,7 +36,7 @@ estimateLyapunov <- function(X, maxIter  = 500L,
                              fitEnd    = NULL) {
   n <- nrow(X);  d <- ncol(X)
   if (n < maxIter + minSep + 1L) {
-    warning("Trajectory too short for the requested maxIter / minSep; returning NA.")
+    cat("estimateLyapunov(): Trajectory too short for the requested maxIter / minSep; returning NA.\n")
     return(NA_real_)
   }
 
@@ -74,10 +74,10 @@ estimateLyapunov <- function(X, maxIter  = 500L,
   good  <- !is.na(logDiv[, 1L])
   nGood <- sum(good)
   if (nGood == 0L) {
-    warning("No valid reference pairs found; returning NA for Lyapunov exponent.")
+    cat("estimateLyapunov(): No valid reference pairs found; returning NA for Lyapunov exponent.\n")
     return(NA_real_)
   }
-  if (nGood < 20L) warning("Very few valid reference pairs found.")
+  if (nGood < 20L) cat("estimateLyapunov(): Very few valid reference pairs found.\n")
   S <- colMeans(logDiv[good, , drop = FALSE])
 
   # linear fit in the scaling region
@@ -90,7 +90,7 @@ estimateLyapunov <- function(X, maxIter  = 500L,
   # guard against all-NA / all-NaN fit region
   ok <- is.finite(S[idx])
   if (sum(ok) < 2L) {
-    warning("Too few finite values in the scaling region; returning NA.")
+    cat("estimateLyapunov(): Too few finite values in the scaling region; returning NA.\n")
     return(NA_real_)
   }
   fit <- lm(S[idx][ok] ~ tt[ok])
@@ -112,7 +112,7 @@ slicedWasserstein <- function(X, Y, nProj = 100L) {
   # truncate the longer trajectory so both have equal length
   n <- min(nrow(X), nrow(Y))
   if (n < 2L) {
-    warning("Trajectories too short for Wasserstein; returning NA.")
+    cat("slicedWasserstein(): Trajectories too short for Wasserstein; returning NA.\n")
     return(NA_real_)
   }
   X <- X[seq_len(n), , drop = FALSE]
@@ -151,7 +151,7 @@ estimateCorrelationDimension <- function(X,
                                          fitFrac  = c(0.20, 0.80)) {
   n <- nrow(X)
   if (n < 3L) {
-    warning("Too few points for correlation dimension; returning NA.")
+    cat("estimateCorrelationDimension(): Too few points for correlation dimension; returning NA.\n")
     return(NA_real_)
   }
   idx <- sample.int(n, size = min(nSample, n))
@@ -161,7 +161,7 @@ estimateCorrelationDimension <- function(X,
   finiteRows <- rowSums(!is.finite(Xs)) == 0L
   Xs <- Xs[finiteRows, , drop = FALSE]
   if (nrow(Xs) < 3L) {
-    warning("Too few finite rows for correlation dimension; returning NA.")
+    cat("estimateCorrelationDimension(): Too few finite rows for correlation dimension; returning NA.\n")
     return(NA_real_)
   }
 
@@ -169,7 +169,7 @@ estimateCorrelationDimension <- function(X,
   dists <- dists[is.finite(dists) & dists > 0]
 
   if (length(dists) < 2L) {
-    warning("No usable pairwise distances (all zero, NA, or NaN); returning NA.")
+    cat("estimateCorrelationDimension(): No usable pairwise distances (all zero, NA, or NaN); returning NA.\n")
     return(NA_real_)
   }
 
@@ -185,7 +185,7 @@ estimateCorrelationDimension <- function(X,
   nOk   <- length(logR)
 
   if (nOk < 2L) {
-    warning("No usable points in the correlation integral; returning NA.")
+    cat("estimateCorrelationDimension(): No usable points in the correlation integral; returning NA.\n")
     return(NA_real_)
   }
 
@@ -193,7 +193,7 @@ estimateCorrelationDimension <- function(X,
   i1  <- max(1L, round(nOk * fitFrac[1]))
   i2  <- min(nOk, round(nOk * fitFrac[2]))
   if (i2 <= i1) {
-    warning("Scaling region too narrow for fit; returning NA.")
+    cat("estimateCorrelationDimension(): Scaling region too narrow for fit; returning NA.\n")
     return(NA_real_)
   }
   fit <- lm(logCr[i1:i2] ~ logR[i1:i2])
@@ -213,7 +213,7 @@ acfPerDim <- function(X, maxLag = 100L) {
 
   # need at least maxLag + 1 observations; clamp if needed
   if (n < 2L) {
-    warning("Trajectory too short for ACF; returning NA matrix.")
+    cat("acfPerDim(): Trajectory too short for ACF; returning NA matrix.\n")
     return(matrix(NA_real_, nrow = maxLag + 1L, ncol = d))
   }
   maxLag <- min(maxLag, n - 1L)
@@ -256,16 +256,19 @@ compareLong <- function(query, target,
 
   # Strip rows containing NA, NaN, Inf, -Inf so downstream code never sees them
   d <- ncol(query)
+  nFull <- nrow(query)
   query  <- keepFiniteRows(query)
   target <- keepFiniteRows(target)
 
   if (nrow(query) < 2L || nrow(target) < 2L) {
-    warning("Too few finite rows in query or target; returning all NA.")
+    cat("compareLong(): Too few finite rows in query or target; returning all NA.\n")
     return(list(
       lyapunov             = NA_real_,
       wasserstein          = list(mean = NA_real_, sd = NA_real_, n = 0L),
       correlationDimension = NA_real_,
-      autocorrelation      = matrix(NA_real_, nrow = acfMaxLag + 1L, ncol = d)
+      autocorrelation      = matrix(NA_real_, nrow = acfMaxLag + 1L, ncol = d),
+      nNotFinite = nFull - nrow(query),
+      n = nFull
     ))
   }
 
@@ -292,7 +295,7 @@ compareLong <- function(query, target,
     wasserstein          = wsSummary,
     correlationDimension = cdX,
     autocorrelation      = ac,
-    nNotFinite = sum(rowSums(is.finite(query))>0),
-    n = nrow(query)
+    nNotFinite = nFull - nrow(query),
+    n = nFull
   )
 }
