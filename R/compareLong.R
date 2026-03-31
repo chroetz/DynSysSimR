@@ -147,11 +147,19 @@ estimateCorrelationDimension <- function(X,
   idx <- sample.int(n, size = min(nSample, n))
   Xs  <- X[idx, , drop = FALSE]
 
+  # drop rows containing NA/NaN/Inf so dist() stays clean
+  finiteRows <- rowSums(!is.finite(Xs)) == 0L
+  Xs <- Xs[finiteRows, , drop = FALSE]
+  if (nrow(Xs) < 3L) {
+    warning("Too few finite rows for correlation dimension; returning NA.")
+    return(NA_real_)
+  }
+
   dists <- as.vector(dist(Xs))              # N*(N-1)/2 distances
-  dists <- dists[dists > 0]
+  dists <- dists[is.finite(dists) & dists > 0]
 
   if (length(dists) < 2L) {
-    warning("All pairwise distances are zero; returning NA.")
+    warning("No usable pairwise distances (all zero, NA, or NaN); returning NA.")
     return(NA_real_)
   }
 
@@ -250,6 +258,8 @@ compareLong <- function(query, target,
     lyapunov             = leX,
     wasserstein          = wsSummary,
     correlationDimension = cdX,
-    autocorrelation      = ac
+    autocorrelation      = ac,
+    nNotFinite = sum(rowSums(is.finite(query))>0),
+    n = nrow(query)
   )
 }

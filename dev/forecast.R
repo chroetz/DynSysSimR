@@ -178,7 +178,9 @@ for (parentSeed in randomSeeds) {
         lyapunov = longTermStats$lyapunov,
         wasserstein = longTermStats$wasserstein,
         correlationDimension = longTermStats$correlationDimension,
-        autocorrelation = list(longTermStats$autocorrelation)
+        autocorrelation = list(longTermStats$autocorrelation),
+        longNonFinite = longTermStats$nNotFinite,
+        longN = longTermStats$n,
       )
 
       results <- append(results, list(result))
