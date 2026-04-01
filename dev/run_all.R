@@ -1,6 +1,0 @@
-source("run_truth.R")
-source("run_noise.R")
-source("run_forecast.R")
-source("run_evaluate.R")
-source("run_errorStats.R")
-source("run_report.R")
