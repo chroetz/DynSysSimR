@@ -23,3 +23,7 @@ assimilatePolyProp <- function(model, xTrain) {
   return(xTrain)
 }
 
+coefPolyProp <- function(model) {
+  return(model$coeffs)
+}
+

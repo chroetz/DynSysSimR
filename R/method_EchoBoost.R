@@ -31,3 +31,6 @@ assimilateEchoBoost <- function(model, xTrain) {
   return(model$assimilation[[1]])
 }
 
+coefEchoBoost <- function(model) {
+  return(model$coeffs)
+}

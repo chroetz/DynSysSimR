@@ -16,3 +16,7 @@ assimilateTemplate <- function(model, xTrain) {
   assimilation <- matrix()
   return(assimilation)
 }
+
+coefTemplate <- function(model) {
+  return(matrix())
+}

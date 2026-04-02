@@ -29,3 +29,6 @@ assimilateEnKF <- function(model, xTrain) {
   return(model$analysis[[1]])
 }
 
+coefEnKF <- function(model) {
+  return(model$coeffs)
+}
