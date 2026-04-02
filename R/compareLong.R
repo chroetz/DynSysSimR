@@ -109,11 +109,13 @@ slicedWasserstein <- function(X, Y, nProj = 100L) {
   d <- ncol(X)
   stopifnot(ncol(Y) == d)
 
+  w1 <- rep(NA_real_, nProj)
+
   # truncate the longer trajectory so both have equal length
   n <- min(nrow(X), nrow(Y))
   if (n < 2L) {
     cat("slicedWasserstein(): Trajectories too short for Wasserstein; returning NA.\n")
-    return(NA_real_)
+    return(w1)
   }
   X <- X[seq_len(n), , drop = FALSE]
   Y <- Y[seq_len(n), , drop = FALSE]
@@ -130,7 +132,6 @@ slicedWasserstein <- function(X, Y, nProj = 100L) {
   pY <- Y %*% dirs
 
   # exact 1-D W1 for equal-size samples: mean|sort(a) - sort(b)|
-  w1 <- numeric(nProj)
   for (k in seq_len(nProj)) {
     w1[k] <- mean(abs(sort(pX[, k]) - sort(pY[, k])))
   }
@@ -211,21 +212,22 @@ acfPerDim <- function(X, maxLag = 100L) {
   d <- ncol(X)
   n <- nrow(X)
 
-  # need at least maxLag + 1 observations; clamp if needed
-  if (n < 2L) {
-    cat("acfPerDim(): Trajectory too short for ACF; returning NA matrix.\n")
-    return(matrix(NA_real_, nrow = maxLag + 1L, ncol = d))
-  }
-  maxLag <- min(maxLag, n - 1L)
-
   acPerDim <- matrix(NA_real_, nrow = maxLag + 1L, ncol = d)
+
+  # need at least maxLag + 1 observations; clamp if needed
+  if (n <= maxLag) {
+    cat("acfPerDim(): Trajectory too short for ACF; returning NA matrix.\n")
+    return(acPerDim)
+  }
+  if (!all(is.finite(X))) {
+    cat("acfPerDim(): Trajectory contains NA, NaN or Inf; returning NA matrix.\n")
+    return(acPerDim)
+  }
+
   for (j in seq_len(d)) {
     col <- X[, j]
-    col <- col[is.finite(col)]
-    if (length(col) < 2L) next
-    lag_j <- min(maxLag, length(col) - 1L)
     a <- tryCatch(
-      as.numeric(acf(col, lag.max = lag_j, plot = FALSE)$acf),
+      as.numeric(acf(col, lag.max = maxLag, plot = FALSE)$acf),
       error = function(e) NULL
     )
     if (!is.null(a)) acPerDim[seq_along(a), j] <- a
