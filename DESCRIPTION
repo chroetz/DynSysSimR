@@ -12,6 +12,7 @@ Imports:
     arrow,
     deSolve,
     dplyr,
+    DynLossOptimR,
     ggplot2,
     grDevices,
     gt,
@@ -25,4 +26,6 @@ Imports:
     tibble,
     tikzDevice,
     withr
-Remotes: chroetz/PolyPropR
+Remotes: 
+    chroetz/PolyPropR,
+    chroetz/DynLossOptimR
