@@ -4,8 +4,9 @@ parmsFullLoss <- function(parmsString) {
   nRollout <- 5
   weightsObsBase <- 0.2
   weightsAnaBase <- 0.2
+  targetUpdateFactor <- 0
   eval(parse(text = paste(parmsString, collapse=";")))
-  return(lst(nDeg, nRollout, normalization, weightsObsBase, weightsAnaBase))
+  return(lst(nDeg, nRollout, normalization, weightsObsBase, weightsAnaBase, targetUpdateFactor))
 }
 
 fitFullLoss <- function(xTrain, parms) {
@@ -20,7 +21,8 @@ fitFullLoss <- function(xTrain, parms) {
     xTrain,
     nDeg = parms$nDeg,
     weightSchedule = ws,
-    normalizationType = parms$normalization
+    normalizationType = parms$normalization,
+    targetUpdateFactor = parms$targetUpdateFactor
   )
   return(model)
 }
