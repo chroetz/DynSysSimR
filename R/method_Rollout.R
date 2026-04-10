@@ -3,8 +3,10 @@ parmsRollout <- function(parmsString) {
   nDeg <- 2
   nRollout <- 5
   weightingType <- "const" # or "point "
+  optimMaxit <- 1e4
+  optimMethod <- "nlminb"
   eval(parse(text = paste(parmsString, collapse=";")))
-  return(lst(nDeg, nRollout, normalization, weightingType))
+  return(lst(nDeg, nRollout, normalization, weightingType, optimMaxit, optimMethod))
 }
 
 fitRollout <- function(xTrain, parms) {
@@ -19,7 +21,9 @@ fitRollout <- function(xTrain, parms) {
     xTrain,
     nDeg = parms$nDeg,
     weightSchedule = ws,
-    normalizationType = parms$normalization
+    normalizationType = parms$normalization,
+    optimMaxit = parms$optimMaxit,
+    optimMethod = parms$optimMethod
   )
   return(model)
 }
