@@ -286,7 +286,7 @@ compareLong <- function(query, target,
   ac <- acfPerDim(query, acfMaxLag)
 
   # build Wasserstein summary; handle scalar NA from degenerate case
-  if (length(sw) == 1L && is.na(sw)) {
+  if (all(is.na(sw))) {
     wsSummary <- list(mean = NA_real_, sd = NA_real_, n = 0L)
   } else {
     wsSummary <- list(mean = mean(sw), sd = sd(sw), n = length(sw))

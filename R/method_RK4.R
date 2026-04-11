@@ -11,12 +11,12 @@ fitRK4 <- function(xTrain, parms) {
   func <- switch(
     parms$systemName,
     L63 = lorenz63,
-    stop("Unknown systemName ", systemName)
+    stop("Unknown systemName ", parms$systemName)
   )
   funcParms <- switch(
     parms$systemName,
     L63 = c(sigma = 10, rho = 28, beta = 8/3),
-    stop("Unknown systemName ", systemName)
+    stop("Unknown systemName ", parms$systemName)
   )
   return(c(parms, lst(func, funcParms)))
 }

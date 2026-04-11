@@ -116,7 +116,7 @@ readData <- function(dirPath = NULL, name = NULL, filePath = NULL) {
     if (length(filePath) == 0) stop("Did not find ", name, " data files at ", dirPath)
     if (length(filePath) > 1) {
       filePath <- filePath[1]
-      warning("Found multiple ", name, " info files at ", dirPath, ". Using ", filePath, immediate.=TRUE)
+      warning("Found multiple ", name, " data files at ", dirPath, ". Using ", filePath, immediate.=TRUE)
     }
   }
   stopifnot(is.character(filePath))
@@ -159,7 +159,7 @@ saveGgplotAsTikz <- function(plt, outFilePath, width, height, ...) {
     c(texLines[1:5], insertLines, texLines[6:length(texLines)]),
     outFilePath
   )
-  system(sprintf("pdflatex.exe -interaction=nonstopmode -output-directory=\"%s\" \"%s\"", dirname(outFilePath), outFilePath))
+  system(sprintf("pdflatex -interaction=nonstopmode -output-directory=\"%s\" \"%s\"", dirname(outFilePath), outFilePath))
 }
 
 #' @export

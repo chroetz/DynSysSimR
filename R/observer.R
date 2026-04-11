@@ -3,7 +3,7 @@ observe <- function(xTruth, noiseSd, type, seed) {
   observeSpecific <- switch(
     type,
     Gauss = observeGauss,
-    stop("Unkown observer type: ", type)
+    stop("Unknown observer type: ", type)
   )
   withr::with_seed(
     seed,

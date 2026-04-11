@@ -26,7 +26,7 @@ sampleTruth <- function(longTruth, stepRate, nTrain, nTest, seed) {
 
 #' @export
 sampleNTruthX <- function(longTruth, stepRate, len, nReps, seed) {
-  limit <- nrow(longTruth) - ((len+1)*stepRate)
+  limit <- nrow(longTruth) - ((len-1)*stepRate)
   startIdxs <-  withr::with_seed(seed, sample.int(limit, nReps))
   vapply(
     startIdxs,
